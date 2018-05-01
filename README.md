@@ -6,4 +6,4 @@ In order to automate deploying and testing, I adapted these scripts. Previous ve
   - Make sure you are logged-in as `guseuser`.
   - Clone this repository on the home folder.
   
-Make sure you end up with the scripts under the `~\guse-init-scripts` folder. I know this is tedious, but it's quite practical to be able to restart gUSE remotely if proper credentials are used via ssh (to enable passwordless authentication).
+Make sure you end up with the scripts under the `~/guse-init-scripts` folder. I know this is tedious, but it's quite practical to be able to restart gUSE remotely if proper credentials are used via ssh (to enable passwordless authentication).
