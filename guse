@@ -1,0 +1,78 @@
+#!/bin/bash
+
+### BEGIN INIT INFO
+# Provides:          guse
+# Required-Start:    $remote_fs mysql
+# Required-Stop:     $remote_fs mysql
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: gUSE init script
+# Description:       This file is used as the init script of WS-PGRADE/gUSE
+### END INIT INFO
+
+# Author: Zoltan Farkas <zoltan.farkas@sztaki.mta.hu>
+
+# Do NOT "set -e"
+# set -x
+VERBOSE="yes"
+
+# PATH should only include /usr/* if it runs after the mountnfs.sh script
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+DESC="gUSE init script"
+SCRIPTNAME="guse"
+
+# Set here the name of the user running the gUSE service
+GUSE_USER=guseuser
+
+# Set gUSE user's home directory
+GUSE_USER_HOME=`eval echo ~"$GUSE_USER"`
+
+
+# Some sanity checks
+[ -z "$GUSE_USER" ] && (>&2 echo "failesd to manage gUSE services, as variable \"GUSE_USER\" is not set in $SCRIPTNAME") && exit -1
+[ ! -f "$GUSE_USER_HOME"/.guserc ] &&  (>&2 echo "falied to manage gUSE service, as no .guserc exists in specified user's home") && exit -1
+
+function check_jdk() {
+        update-alternatives --display java 2> /dev/null | grep -q "link currently points.*oracle"
+        [ $? != 0 ] && echo "WARNING: The 'java' alternative is not set to Oracle JDK's 'java', you may experience problems with DCI Bridge plugins"
+}
+
+#
+# Function that starts the daemon/service
+#
+function do_start() {
+	echo "###### starting gUSE (as user `whoami`) ######"
+        check_jdk
+        /bin/bash -c "$GUSE_USER_HOME"/guse-init-scripts/start.sh
+        err_code="$?"
+        case "$err_code" in
+            0) echo "gUSE started." ;;
+            *) (>&2 echo "Could not start gUSE (error code: $err_code). Make sure you kill the Apache Tomcat process before trying again.")
+               exit $err_code ;;
+        esac
+}
+
+#
+# Function that stops the daemon/service
+#
+function do_stop() {
+        echo "###### stopping gUSE (as user `whoami`) #######"
+        /bin/bash -c "$GUSE_USER_HOME"/guse-init-scripts/stop.sh
+	err_code="$?"
+        case "$err_code" in
+            0) echo "gUSE stopped." ;;
+            *) (>&2 echo "Could not stop gUSE (error code: $err_code). Make sure you kill the Apache Tomcat process before attempting to start gUSE again.")
+               exit $err_code ;;
+        esac
+}
+
+case "$1" in
+      start)   do_start ;;
+       stop)   do_stop ;;
+    restart)   do_stop && do_start ;;
+          *)
+               echo "Usage: $SCRIPTNAME { start | stop | restart }" >&2
+               exit 3
+               ;;
+esac
+exit 0
